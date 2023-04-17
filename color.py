@@ -13,4 +13,4 @@ class Color(object):
         self.alpha = alpha
 
     def __str__(self):
-        return '{self.red}-{self.green}-{self.blue}'
+        return "{self.red}-{self.green}-{self.blue}"
