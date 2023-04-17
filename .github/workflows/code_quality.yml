@@ -10,6 +10,10 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v3
 
-      - name: Ruff
+      - name: Setup Ruff
         uses: chartboost/ruff-action@v1
+      
+      - name: Run ruff
+        run: |
+          ruff check $(git ls-files '*.py' '*.ipynb')
 
