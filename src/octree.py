@@ -12,6 +12,7 @@ class Node(object):
         self.pixel_count = 0
         self.palette_index = 0
         self.children = [None for _ in range(8)]
+        self.pixels = 0
         # add node to current level
         if level < Octree.MAX_DEPTH - 1:
             parent.add_level_node(level, self)
@@ -51,6 +52,7 @@ class Node(object):
         """
         Add `color` to the tree
         """
+        self.pixels += 1
         if level >= Octree.MAX_DEPTH:
             self.color.red += color.red
             self.color.green += color.green
@@ -124,7 +126,7 @@ class Octree(object):
     Use MAX_DEPTH to limit a number of levels
     """
 
-    MAX_DEPTH = 3
+    MAX_DEPTH = 8
 
     def __init__(self):
         """
@@ -163,13 +165,44 @@ class Octree(object):
         # up to 8 leaves can be reduced here and the palette will have
         # only 248 colors (in worst case) instead of expected 256 colors
         for level in range(Octree.MAX_DEPTH - 1, -1, -1):
+            if leaf_count <= color_count:
+                break
             if self.levels[level]:
                 for node in self.levels[level]:
                     leaf_count -= node.remove_leaves()
                     if leaf_count <= color_count:
                         break
-                if leaf_count <= color_count:
+                self.levels[level] = []
+        # build palette
+        for node in self.get_leaves():
+            if palette_index >= color_count:
+                break
+            if node.is_leaf():
+                palette.append(node.get_color())
+            node.palette_index = palette_index
+            palette_index += 1
+        return palette
+    
+    def make_palette_2(self, color_count):
+        """
+        Make color palette with `color_count` colors maximum
+        """
+        palette = []
+        palette_index = 0
+        leaf_count = len(self.get_leaves())
+        # reduce nodes
+        # up to 8 leaves can be reduced here and the palette will have
+        # only 248 colors (in worst case) instead of expected 256 colors
+        for level in range(Octree.MAX_DEPTH - 1, -1, -1):
+            if leaf_count <= color_count:
                     break
+            if self.levels[level]:
+                nodes = self.levels[level]
+                nodes.sort(key=lambda x: x.pixels)
+                for node in nodes:
+                    leaf_count -= node.remove_leaves()
+                    if leaf_count <= color_count:
+                        break
                 self.levels[level] = []
         # build palette
         for node in self.get_leaves():
