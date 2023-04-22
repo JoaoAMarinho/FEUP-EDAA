@@ -59,6 +59,7 @@ class Node():
         
         if self.children[index].is_leaf():
             self.children[index].color.increment(color)
+            self.children[index].increment_pixel_count()
             return
         
         self.children[index].add_color(color, level + 1, parent)

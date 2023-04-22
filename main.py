@@ -7,14 +7,22 @@ if __name__ == '__main__':
     octree.add_color(Color(100,150,100))
     octree.add_color(Color(100,200,100))
     octree.add_color(Color(100,100,200))
+    octree.add_color(Color(0,0,200))
     octree.add_color(Color(200,100,200))
-    octree.add_color(Color(200,100,200))
-    octree.add_color(Color(200,100,200))
-    octree.add_color(Color(200,100,200))
-    octree.add_color(Color(200,100,200))
+    octree.add_color(Color(0,100,200))
+    octree.add_color(Color(200,0,200))
+    octree.add_color(Color(10,100,200))
     # octree.print()
 
-    print("\nREDUCE OCTREEn\n")
+    print("\nREDUCE OCTREE\n")
 
-    octree.make_palette(16)
+    palette = octree.make_palette(4)
     octree.print()
+
+    print("\nPALLET\n")
+    for elem in palette:
+        print(str(elem), end = "|")
+
+    print("\nLEAVES\n")
+    for elem in octree.get_leaves():
+        print(str(elem), end = "|")
