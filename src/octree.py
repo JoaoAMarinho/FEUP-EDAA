@@ -132,7 +132,7 @@ class Octree():
             node = nodes.pop(0)
             if node:
                 nodes_set.add(node.id)
-                nodes += node.children
+                nodes.extend(node.children)
         return nodes_set
 
     def print(self):
