@@ -20,5 +20,11 @@ class Color():
         self.green += color.green
         self.blue += color.blue
 
+    def is_transparent(self):
+        """
+        Check that color is transparent
+        """
+        return self.alpha == 0
+
     def __str__(self):
         return "{self.red}-{self.green}-{self.blue}"

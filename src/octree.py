@@ -34,6 +34,8 @@ class Octree():
         """
         Add `color` to the Octree
         """
+        if color.is_transparent():
+            return
         # passes self value as `parent` to save nodes to levels dict
         self.root.add_color(color, 0, self)
 
