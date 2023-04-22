@@ -1,17 +1,18 @@
 from src.octree import Octree
 from src.color import Color
 from random import randint
-from src.utils import *
+from src.utils import jaccard_similarity_coefficient
 
 def test_jaccard():
 
-    octree1 = build_rand_octree(10)
-    octree2 = build_rand_octree(10)
+    octree1 = build_octree()
+    octree2 = build_octree()
 
-    reduce_octree(octree1,16)
+    reduce_octree(octree1,32)
     reduce_octree(octree2,16)
 
-    similarity = jaccard_similarity_coefficient(octree1.node_id_set(), octree2.node_id_set())
+    similarity = jaccard_similarity_coefficient(octree1.node_id_set(),\
+                                                octree2.node_id_set())
 
     print("Similarity = " + str(similarity))
 
@@ -52,5 +53,3 @@ def build_rand_octree(x):
 
 if __name__ == '__main__':
     test_jaccard()
-
-

@@ -15,7 +15,7 @@ class Octree():
         Init Octree Quantizer
         """
         self.depth = depth
-        self.levels = {i: [] for i in range(self.depth)}
+        self.levels = {i: [] for i in range(1, self.depth+1)}
         self.root = Node(0, self)
 
     def get_leaves(self):
@@ -37,14 +37,12 @@ class Octree():
         if color.is_transparent():
             return
         # passes self value as `parent` to save nodes to levels dict
-        self.root.add_color(color, 0, self)
+        self.root.add_color(color, 1, self)
 
     def make_palette(self, color_count):
         """
         Make color palette with `color_count` colors maximum
         """
-        palette = []
-        palette_index = 0
         leaf_count = len(self.get_leaves())
 
         # remove leaves level by level
@@ -70,22 +68,13 @@ class Octree():
                                     else self.levels[level][index + 1:]
             self.depth -= 1 if index == -1 else 0
 
-        # build palette
-        for node in self.get_leaves():
-            if palette_index >= color_count:
-                break
-            if node.is_leaf():
-                palette.append(node.get_color())
-            node.palette_index = palette_index
-            palette_index += 1
-        return palette
+        return self._build_palette(color_count)
     
-    def make_palette_2(self, color_count):
+    def make_optimized_palette(self, color_count):
         """
         Make color palette with `color_count` colors maximum
+        by removing nodes with the least number of pixels
         """
-        palette = []
-        palette_index = 0
         leaf_count = len(self.get_leaves())
 
         # remove leaves level by level
@@ -113,12 +102,19 @@ class Octree():
                                     else nodes[index + 1:]
             self.depth -= 1 if index == -1 else 0
 
-        # build palette
+        return self._build_palette(color_count)
+
+    def _build_palette(self, color_count):
+        """
+        Build palette from leaves with `color_count` colors maximum
+        """
+        palette = []
+        palette_index = 0
+
         for node in self.get_leaves():
             if palette_index >= color_count:
                 break
-            if node.is_leaf():
-                palette.append(node.get_color())
+            palette.append(node.get_color())
             node.palette_index = palette_index
             palette_index += 1
         return palette
@@ -127,8 +123,8 @@ class Octree():
         """
         Get palette index for `color`
         """
-        return self.root.get_palette_index(color, 0)
-    
+        return self.root.get_palette_index(color, 1)
+
     def node_id_set(self):
         nodes = [self.root]
         nodes_set = set()
@@ -138,7 +134,7 @@ class Octree():
                 nodes_set.add(node.id)
                 nodes += node.children
         return nodes_set
-    
+
     def print(self):
         nodes = [self.root]
         next_nodes = []
@@ -147,8 +143,8 @@ class Octree():
             print("LEVEL", str(level))
             level += 1
             for elem in nodes:
-                print(str(elem), end ="|")
                 if elem:
+                    print(str(elem), end ="|")
                     next_nodes += elem.children
             print("\n")
             nodes = next_nodes

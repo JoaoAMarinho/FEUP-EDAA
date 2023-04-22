@@ -15,8 +15,10 @@ class Node():
         self.id = parent_id*8 + index
 
         # add node to current level
-        if level < parent.depth - 1:
-            parent.add_level_node(level, self)
+        if level < parent.depth:
+            # root node is not added to levels
+            if level != 0:
+                parent.add_level_node(level, self)
             self.children = [None for _ in range(8)]
         else:
             # node is leaf
@@ -56,13 +58,13 @@ class Node():
         index = self.get_color_index_for_level(color, level)
 
         if not self.children[index]:
-            self.children[index] = Node(level, parent, index, self.id)
-        
+            self.children[index] = Node(level, parent, index+1, self.id)
+
         if self.children[index].is_leaf():
             self.children[index].color.increment(color)
             self.children[index].increment_pixel_count()
             return
-        
+
         self.children[index].add_color(color, level + 1, parent)
 
     def get_palette_index(self, color, level):
@@ -101,7 +103,7 @@ class Node():
         Get index of `color` for next `level`
         """
         index = 0
-        mask = 0x80 >> level
+        mask = 0x100 >> level
         if color.red & mask:
             index |= 4
         if color.green & mask:
@@ -118,6 +120,6 @@ class Node():
             int(self.color.red / self.pixel_count),
             int(self.color.green / self.pixel_count),
             int(self.color.blue / self.pixel_count))
-    
+
     def __str__(self):
-        return "\'"+str(self.id)+"\'" + str(self.color) + "(" + str(self.pixel_count) + ")"
+        return f"\'{self.id}\' {self.color} ({self.pixel_count})"

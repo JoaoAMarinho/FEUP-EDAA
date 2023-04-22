@@ -27,4 +27,4 @@ class Color():
         return self.alpha == 0
 
     def __str__(self):
-        return str(self.red) + "-" + str(self.green) + "-" + str(self.blue)
+        return f"{self.red}-{self.green}-{self.blue}"
