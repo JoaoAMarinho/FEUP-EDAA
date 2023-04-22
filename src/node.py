@@ -5,13 +5,14 @@ class Node():
     Octree Node class
     """
 
-    def __init__(self, level, parent):
+    def __init__(self, level, parent, index = 0, parent_id = 0):
         """
         Init new Octree Node
         """
         self.color = Color(0, 0, 0)
         self.pixel_count = 0
         self.palette_index = 0
+        self.id = parent_id*8 + index
 
         # add node to current level
         if level < parent.depth - 1:
@@ -55,7 +56,7 @@ class Node():
         index = self.get_color_index_for_level(color, level)
 
         if not self.children[index]:
-            self.children[index] = Node(level, parent)
+            self.children[index] = Node(level, parent, index, self.id)
         
         if self.children[index].is_leaf():
             self.children[index].color.increment(color)
@@ -119,4 +120,4 @@ class Node():
             int(self.color.blue / self.pixel_count))
     
     def __str__(self):
-        return "" + str(self.color) + "(" + str(self.pixel_count) + ")"
+        return "\'"+str(self.id)+"\'" + str(self.color) + "(" + str(self.pixel_count) + ")"

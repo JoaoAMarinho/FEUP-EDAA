@@ -117,6 +117,16 @@ class Octree():
         """
         return self.root.get_palette_index(color, 0)
     
+    def node_id_set(self):
+        nodes = [self.root]
+        nodes_set = set()
+        while nodes:
+            node = nodes.pop(0)
+            if node:
+                nodes_set.add(node.id)
+                nodes += node.children
+        return nodes_set
+    
     def print(self):
         nodes = [self.root]
         next_nodes = []
