@@ -87,20 +87,32 @@ class Octree():
         palette = []
         palette_index = 0
         leaf_count = len(self.get_leaves())
-        # reduce nodes
-        # up to 8 leaves can be reduced here and the palette will have
-        # only 248 colors (in worst case) instead of expected 256 colors
+
+        # remove leaves level by level
         for level in range(self.depth - 1, -1, -1):
             if leaf_count <= color_count:
+                break
+
+            n_level_nodes = len(self.levels[level])
+            if n_level_nodes == 0:
+                continue
+
+            index = -1
+            nodes = self.levels[level]
+            nodes.sort(key=lambda x: x.pixel_count)
+            for i in range(n_level_nodes):
+                node = nodes[i]
+                leaf_count -= node.remove_leaves()
+                if leaf_count <= color_count:
+                    index = i
                     break
-            if self.levels[level]:
-                nodes = self.levels[level]
-                nodes.sort(key=lambda x: x.pixels)
-                for node in nodes:
-                    leaf_count -= node.remove_leaves()
-                    if leaf_count <= color_count:
-                        break
-                self.levels[level] = []
+
+            # remove the whole level if all nodes are leaves
+            # otherwise keep the remaining ones
+            self.levels[level] = [] if index == -1 \
+                                    else nodes[index + 1:]
+            self.depth -= 1 if index == -1 else 0
+
         # build palette
         for node in self.get_leaves():
             if palette_index >= color_count:
