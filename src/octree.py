@@ -116,6 +116,21 @@ class Octree():
         Get palette index for `color`
         """
         return self.root.get_palette_index(color, 0)
+    
+    def print(self):
+        nodes = [self.root]
+        next_nodes = []
+        level = 0
+        while nodes:
+            print("LEVEL", str(level))
+            level += 1
+            for elem in nodes:
+                print(str(elem), end ="|")
+                if elem:
+                    next_nodes += elem.children
+            print("\n")
+            nodes = next_nodes
+            next_nodes = []
 
 if __name__ == '__main__':
     octree = Octree()

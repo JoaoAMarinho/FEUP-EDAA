@@ -116,3 +116,6 @@ class Node():
             int(self.color.red / self.pixel_count),
             int(self.color.green / self.pixel_count),
             int(self.color.blue / self.pixel_count))
+    
+    def __str__(self):
+        return "" + str(self.color) + "(" + str(self.pixel_count) + ")"
