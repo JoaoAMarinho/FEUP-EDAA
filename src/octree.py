@@ -1,143 +1,28 @@
-from src.color import Color
-class Node(object):
-    """
-    Octree Node class for color quantization
-    """
+from src.node import Node
 
-    def __init__(self, level, parent):
-        """
-        Init new Octree Node
-        """
-        self.color = Color(0, 0, 0)
-        self.pixel_count = 0
-        self.palette_index = 0
-        self.children = [None for _ in range(8)]
-        # add node to current level
-        if level < Octree.MAX_DEPTH - 1:
-            parent.add_level_node(level, self)
-
-    def is_leaf(self):
-        """
-        Check that node is leaf
-        """
-        return self.pixel_count > 0
-
-    def get_leaf_nodes(self):
-        """
-        Get all leaf nodes
-        """
-        leaf_nodes = []
-        for i in range(8):
-            node = self.children[i]
-            if node:
-                if node.is_leaf():
-                    leaf_nodes.append(node)
-                else:
-                    leaf_nodes.extend(node.get_leaf_nodes())
-        return leaf_nodes
-
-    def get_nodes_pixel_count(self):
-        """
-        Get a sum of pixel count for node and its children
-        """
-        sum_count = self.pixel_count
-        for i in range(8):
-            node = self.children[i]
-            if node:
-                sum_count += node.pixel_count
-        return sum_count
-
-    def add_color(self, color, level, parent):
-        """
-        Add `color` to the tree
-        """
-        if level >= Octree.MAX_DEPTH:
-            self.color.red += color.red
-            self.color.green += color.green
-            self.color.blue += color.blue
-            self.pixel_count += 1
-            return
-        index = self.get_color_index_for_level(color, level)
-        if not self.children[index]:
-            self.children[index] = Node(level, parent)
-        self.children[index].add_color(color, level + 1, parent)
-
-    def get_palette_index(self, color, level):
-        """
-        Get palette index for `color`
-        Uses `level` to go one level deeper if the node is not a leaf
-        """
-        if self.is_leaf():
-            return self.palette_index
-        index = self.get_color_index_for_level(color, level)
-        if self.children[index]:
-            return self.children[index].get_palette_index(color, level + 1)
-        else:
-            # get palette index for a first found child node
-            for i in range(8):
-                if self.children[i]:
-                    return self.children[i].get_palette_index(color, level + 1)
-
-    def remove_leaves(self):
-        """
-        Add all children pixels count and color channels to parent node 
-        Return the number of removed leaves
-        """
-        result = 0
-        for i in range(8):
-            node = self.children[i]
-            if node:
-                self.color.red += node.color.red
-                self.color.green += node.color.green
-                self.color.blue += node.color.blue
-                self.pixel_count += node.pixel_count
-                result += 1
-        return result - 1
-
-    def get_color_index_for_level(self, color, level):
-        """
-        Get index of `color` for next `level`
-        """
-        index = 0
-        mask = 0x80 >> level
-        if color.red & mask:
-            index |= 4
-        if color.green & mask:
-            index |= 2
-        if color.blue & mask:
-            index |= 1
-        return index
-
-    def get_color(self):
-        """
-        Get average color
-        """
-        return Color(
-            int(self.color.red / self.pixel_count),
-            int(self.color.green / self.pixel_count),
-            int(self.color.blue / self.pixel_count))
-
-
-class Octree(object):
+class Octree():
     """
     Octree Quantizer class for image color quantization
-    Use MAX_DEPTH to limit a number of levels
+
+    Use MAX_DEPTH to limit the number of levels, can not be greater than 8
+    due to how colors are represented (8 bits per channel)
     """
 
-    MAX_DEPTH = 3
+    MAX_DEPTH = 8
 
-    def __init__(self):
+    def __init__(self, depth=MAX_DEPTH):
         """
         Init Octree Quantizer
         """
-        self.levels = {i: [] for i in range(Octree.MAX_DEPTH)}
+        self.depth = depth
+        self.levels = {i: [] for i in range(1, self.depth+1)}
         self.root = Node(0, self)
 
     def get_leaves(self):
         """
         Get all leaves
         """
-        return [node for node in self.root.get_leaf_nodes()]
+        return self.root.get_leaf_nodes()
 
     def add_level_node(self, level, node):
         """
@@ -149,34 +34,87 @@ class Octree(object):
         """
         Add `color` to the Octree
         """
+        if color.is_transparent():
+            return
         # passes self value as `parent` to save nodes to levels dict
-        self.root.add_color(color, 0, self)
+        self.root.add_color(color, 1, self)
 
     def make_palette(self, color_count):
         """
         Make color palette with `color_count` colors maximum
         """
+        leaf_count = len(self.get_leaves())
+
+        # remove leaves level by level
+        for level in range(self.depth - 1, -1, -1):
+            if leaf_count <= color_count:
+                break
+
+            n_level_nodes = len(self.levels[level])
+            if n_level_nodes == 0:
+                continue
+
+            index = -1
+            for i in range(n_level_nodes):
+                node = self.levels[level][i]
+                leaf_count -= node.remove_leaves()
+                if leaf_count <= color_count:
+                    index = i
+                    break
+
+            # remove the whole level if all nodes are leaves
+            # otherwise keep the remaining ones
+            self.levels[level] = [] if index == -1 \
+                                    else self.levels[level][index + 1:]
+            self.depth -= 1 if index == -1 else 0
+
+        return self._build_palette(color_count)
+    
+    def make_optimized_palette(self, color_count):
+        """
+        Make color palette with `color_count` colors maximum
+        by removing nodes with the least number of pixels
+        """
+        leaf_count = len(self.get_leaves())
+
+        # remove leaves level by level
+        for level in range(self.depth - 1, -1, -1):
+            if leaf_count <= color_count:
+                break
+
+            n_level_nodes = len(self.levels[level])
+            if n_level_nodes == 0:
+                continue
+
+            index = -1
+            nodes = self.levels[level]
+            nodes.sort(key=lambda x: x.pixel_count)
+            for i in range(n_level_nodes):
+                node = nodes[i]
+                leaf_count -= node.remove_leaves()
+                if leaf_count <= color_count:
+                    index = i
+                    break
+
+            # remove the whole level if all nodes are leaves
+            # otherwise keep the remaining ones
+            self.levels[level] = [] if index == -1 \
+                                    else nodes[index + 1:]
+            self.depth -= 1 if index == -1 else 0
+
+        return self._build_palette(color_count)
+
+    def _build_palette(self, color_count):
+        """
+        Build palette from leaves with `color_count` colors maximum
+        """
         palette = []
         palette_index = 0
-        leaf_count = len(self.get_leaves())
-        # reduce nodes
-        # up to 8 leaves can be reduced here and the palette will have
-        # only 248 colors (in worst case) instead of expected 256 colors
-        for level in range(Octree.MAX_DEPTH - 1, -1, -1):
-            if self.levels[level]:
-                for node in self.levels[level]:
-                    leaf_count -= node.remove_leaves()
-                    if leaf_count <= color_count:
-                        break
-                if leaf_count <= color_count:
-                    break
-                self.levels[level] = []
-        # build palette
+
         for node in self.get_leaves():
             if palette_index >= color_count:
                 break
-            if node.is_leaf():
-                palette.append(node.get_color())
+            palette.append(node.get_color())
             node.palette_index = palette_index
             palette_index += 1
         return palette
@@ -185,4 +123,32 @@ class Octree(object):
         """
         Get palette index for `color`
         """
-        return self.root.get_palette_index(color, 0)
+        return self.root.get_palette_index(color, 1)
+
+    def node_id_set(self):
+        nodes = [self.root]
+        nodes_set = set()
+        while nodes:
+            node = nodes.pop(0)
+            if node:
+                nodes_set.add(node.id)
+                nodes.extend(node.children)
+        return nodes_set
+
+    def print(self):
+        nodes = [self.root]
+        next_nodes = []
+        level = 0
+        while nodes:
+            print("LEVEL", str(level))
+            level += 1
+            for elem in nodes:
+                if elem:
+                    print(str(elem), end ="|")
+                    next_nodes += elem.children
+            print("\n")
+            nodes = next_nodes
+            next_nodes = []
+
+if __name__ == '__main__':
+    octree = Octree()
