@@ -15,6 +15,7 @@ class Octree():
         Init Octree Quantizer
         """
         self.depth = depth
+        self.palette = []
         self.levels = {i: [] for i in range(1, self.depth+1)}
         self.root = Node(0, self)
 
@@ -68,7 +69,7 @@ class Octree():
                                     else self.levels[level][index + 1:]
             self.depth -= 1 if index == -1 else 0
 
-        return self._build_palette(color_count)
+        self._build_palette(color_count)
     
     def make_optimized_palette(self, color_count):
         """
@@ -102,7 +103,7 @@ class Octree():
                                     else nodes[index + 1:]
             self.depth -= 1 if index == -1 else 0
 
-        return self._build_palette(color_count)
+        self._build_palette(color_count)
 
     def _build_palette(self, color_count):
         """
@@ -117,7 +118,8 @@ class Octree():
             palette.append(node.get_color())
             node.palette_index = palette_index
             palette_index += 1
-        return palette
+
+        self.palette = palette
 
     def get_palette_index(self, color):
         """
