@@ -12,14 +12,14 @@ QUANTIZED_PATH = "./dataset/quantized/"
 
 ### Image processing functions
 def remove_backgrounds():
-    def remove_background(filepath):
-        filename = filepath.split(".", 1)[0]
-
-        image = Image.open(join(BG_PATH, filepath))
+    def remove_background(filename):
+        image = Image.open(join(BG_PATH, filename + ".jpg"))
         removed_bg_image = remove(image)
         removed_bg_image.save(join(NO_BG_PATH, filename + ".png"))
 
-    files = [f for f in listdir(BG_PATH) if isfile(join(BG_PATH, f))]
+    bg_files = [f.split('.')[0] for f in listdir(BG_PATH) if isfile(join(BG_PATH, f))]
+    no_bg_files = [f.split('.')[0] for f in listdir(NO_BG_PATH) if isfile(join(NO_BG_PATH, f))]
+    files = list(set(bg_files) - set(no_bg_files))
     for file in files:
         remove_background(file)
 
@@ -61,6 +61,14 @@ def save_quantized_image(octree, filename, img_info):
             color = palette[index]
             out_pixels[i, j] = (color.red, color.green, color.blue)
     out_image.save(QUANTIZED_PATH + filename)
+
+def create_node_id_set_from_image(filename, optimized=True, depth=6, palette_size=256):
+    octree, _ = create_octree_from_image(filename, depth)
+    if (optimized):
+      octree.make_optimized_palette(palette_size)
+    else:
+      octree.make_palette(palette_size)
+    return octree.node_id_set()
 
 def jaccard_similarity_coefficient(set1,set2):
     intersection = set1.intersection(set2)
