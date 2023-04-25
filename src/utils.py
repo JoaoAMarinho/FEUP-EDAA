@@ -17,8 +17,11 @@ def remove_backgrounds():
         removed_bg_image = remove(image)
         removed_bg_image.save(join(NO_BG_PATH, filename + ".png"))
 
-    bg_files = [f.split('.')[0] for f in listdir(BG_PATH) if isfile(join(BG_PATH, f))]
-    no_bg_files = [f.split('.')[0] for f in listdir(NO_BG_PATH) if isfile(join(NO_BG_PATH, f))]
+    bg_files = [f.split('.')[0] for f in listdir(BG_PATH)
+                    if isfile(join(BG_PATH, f))]
+    no_bg_files = [f.split('.')[0] for f in listdir(NO_BG_PATH)
+                    if isfile(join(NO_BG_PATH, f))]
+
     files = list(set(bg_files) - set(no_bg_files))
     for file in files:
         remove_background(file)
