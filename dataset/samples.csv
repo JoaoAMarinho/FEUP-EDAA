@@ -1,4 +1,6 @@
 Filename,Label
-1.png,unripe
-2.png,rotten
-3.png,ripe
+sample1.png,unripe
+sample2.png,barely ripe
+sample3.png,ripe
+sample4.png,very ripe
+sample5.png,rotten
