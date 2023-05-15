@@ -11,20 +11,32 @@ PALETTE_PATH = "./dataset/palettes/"
 QUANTIZED_PATH = "./dataset/quantized/"
 
 ### Image processing functions
-def remove_backgrounds():
+def remove_backgrounds(bg_path=BG_PATH, no_bg_path=NO_BG_PATH):
     def remove_background(filename):
-        image = Image.open(join(BG_PATH, filename + ".jpg"))
+        image = Image.open(join(bg_path, filename + ".jpg"))
         removed_bg_image = remove(image)
-        removed_bg_image.save(join(NO_BG_PATH, filename + ".png"))
+        removed_bg_image.save(join(no_bg_path, filename + ".png"))
 
-    bg_files = [f.split('.')[0] for f in listdir(BG_PATH)
-                    if isfile(join(BG_PATH, f))]
-    no_bg_files = [f.split('.')[0] for f in listdir(NO_BG_PATH)
-                    if isfile(join(NO_BG_PATH, f))]
+    bg_files = [f.split('.')[0] for f in listdir(bg_path)
+                    if isfile(join(bg_path, f))]
+    no_bg_files = [f.split('.')[0] for f in listdir(no_bg_path)
+                    if isfile(join(no_bg_path, f))]
 
     files = list(set(bg_files) - set(no_bg_files))
     for file in files:
         remove_background(file)
+
+### Comparison pipeline functions
+def create_features_labels(RIPENESS_LEVELS):
+    X = []
+    y = []
+    for ripeness_level in RIPENESS_LEVELS:
+        path = NO_BG_PATH + ripeness_level
+        files = [f"{ripeness_level}/{f}" for f in listdir(path) if isfile(join(path, f))]
+        X.extend(files)
+        y.extend([ripeness_level] * len(files))
+
+    return X, y
 
 
 ### Octree functions
