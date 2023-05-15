@@ -9,6 +9,7 @@ BG_PATH = "./dataset/bg/"
 NO_BG_PATH = "./dataset/no_bg/"
 PALETTE_PATH = "./dataset/palettes/"
 QUANTIZED_PATH = "./dataset/quantized/"
+IMAGE_SIZE = 518400
 
 ### Image processing functions
 def remove_backgrounds(bg_path=BG_PATH, no_bg_path=NO_BG_PATH):
@@ -40,8 +41,16 @@ def create_features_labels(RIPENESS_LEVELS):
 
 
 ### Octree functions
-def create_octree_from_image(filename, depth):
+def create_octree_from_image(filename, depth, resize=False):
     image = Image.open(NO_BG_PATH + filename)
+
+    if(resize):
+        width, height = image.size
+        curr_size = width * height
+        factor = curr_size // IMAGE_SIZE
+        if(factor > 1):
+            image = image.resize((width // factor, height // factor))
+    
     pixels = image.load()
     width, height = image.size
 
@@ -77,8 +86,8 @@ def save_quantized_image(octree, filename, img_info):
             out_pixels[i, j] = (color.red, color.green, color.blue)
     out_image.save(QUANTIZED_PATH + filename)
 
-def create_node_id_set_from_image(filename, optimized=True, depth=6, palette_size=256):
-    octree, _ = create_octree_from_image(filename, depth)
+def create_node_id_set_from_image(filename, optimized=True, depth=6, palette_size=256, resize=False):
+    octree, _ = create_octree_from_image(filename, depth, resize)
     if (optimized):
       octree.make_optimized_palette(palette_size)
     else:
