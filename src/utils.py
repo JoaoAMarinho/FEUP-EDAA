@@ -33,7 +33,8 @@ def create_features_labels(RIPENESS_LEVELS):
     y = []
     for ripeness_level in RIPENESS_LEVELS:
         path = NO_BG_PATH + ripeness_level
-        files = [f"{ripeness_level}/{f}" for f in listdir(path) if isfile(join(path, f))]
+        files = [f"{ripeness_level}/{f}" for f in listdir(path) 
+                 if isfile(join(path, f))]
         X.extend(files)
         y.extend([ripeness_level] * len(files))
 
@@ -44,13 +45,13 @@ def create_features_labels(RIPENESS_LEVELS):
 def create_octree_from_image(filename, depth, resize=False):
     image = Image.open(NO_BG_PATH + filename)
 
-    if(resize):
+    if resize:
         width, height = image.size
         curr_size = width * height
         factor = curr_size // IMAGE_SIZE
-        if(factor > 1):
+        if factor > 1:
             image = image.resize((width // factor, height // factor))
-    
+
     pixels = image.load()
     width, height = image.size
 
@@ -86,12 +87,13 @@ def save_quantized_image(octree, filename, img_info):
             out_pixels[i, j] = (color.red, color.green, color.blue)
     out_image.save(QUANTIZED_PATH + filename)
 
-def create_node_id_set_from_image(filename, optimized=True, depth=6, palette_size=256, resize=False):
+def create_node_id_set_from_image(filename, optimized=True,
+                                  depth=6, palette_size=256, resize=False):
     octree, _ = create_octree_from_image(filename, depth, resize)
-    if (optimized):
-      octree.make_optimized_palette(palette_size)
+    if optimized:
+        octree.make_optimized_palette(palette_size)
     else:
-      octree.make_palette(palette_size)
+        octree.make_palette(palette_size)
     return octree.node_id_set()
 
 def jaccard_similarity_coefficient(set1,set2):
