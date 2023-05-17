@@ -98,5 +98,5 @@ def create_node_id_set_from_image(filename, optimized=True,
 
 def jaccard_similarity_coefficient(set1,set2):
     intersection = set1.intersection(set2)
-    union = set1.union(set2)
-    return len(intersection) / len(union)
+    union_len = len(set1) + len(set2) - len(intersection)
+    return len(intersection) / union_len
